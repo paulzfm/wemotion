@@ -6,10 +6,10 @@ const mysql = require('mysql');
 const c = require('./config');
 
 var conn = mysql.createConnection({
-  host     : 'localhost',
-  user     : c.MYSQL_USER,
-  password : c.MYSQL_PASS,
-  database : c.MYSQL_DB
+  host: 'localhost',
+  user: c.MYSQL_USER,
+  password: c.MYSQL_PASS,
+  database: c.MYSQL_DB
 });
 
 exports.query = function (sql, res, cb) {

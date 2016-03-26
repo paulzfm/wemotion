@@ -14,11 +14,16 @@ router.get('/login', function (req, res) {
 });
 
 router.get('/cancel', function (req, res) {
-  res.send('You cancelled the operation');
+  res.send('Fail! You cancelled the operation or cannot authorize.');
 });
 
 router.get('/callback', function (req, res) {
   u.requestToken(req.query.code, function (json) {
+    if (!json['uid']) {
+      res.redirect('/cancel');
+      return;
+    }
+
     var sql = 'SELECT uid FROM user WHERE uid="' + json['uid'] + '";';
     console.log(sql);
     db.query(sql, res, function (rows) {
@@ -26,13 +31,18 @@ router.get('/callback', function (req, res) {
         sql = 'INSERT INTO user (uid, token) VALUES ("' + json['uid'] + '", "' + json['access_token'] + '");';
         console.log(sql);
         db.query(sql, res, function () {
-          res.send('Your uid is ' + json['uid']);
+          res.redirect('/success?uid=' + json['uid']);
         });
       } else {
-        res.send('Your uid is ' + json['uid']);
+        res.redirect('/success?uid=' + json['uid']);
       }
     });
   });
+});
+
+router.get('/success', function (req, res) {
+  var uid = req.query.uid;
+  res.send('Success! Your uid is ' + uid + '.');
 });
 
 router.get('/users', function (req, res) {
@@ -60,6 +70,13 @@ router.get('/posts/:uid', function (req, res) {
     } else {
       var token = rows[0].token;
       u.requestPosts(token, function (json) {
+        if (!json['statuses']) {
+          res.json({
+            'err_code': -4,
+            'err_msg': 'failed to fetch posts'
+          });
+          return;
+        }
         res.json(json);
       });
     }
@@ -79,13 +96,21 @@ router.get('/emotion/:uid', function (req, res) {
     } else {
       var token = rows[0].token;
       u.requestPosts(token, function (json) {
+        if (!json['statuses']) {
+          res.json({
+            'err_code': -4,
+            'err_msg': 'failed to fetch posts'
+          });
+          return;
+        }
+
         var scores = json['statuses'].map(u.computeEmotion);
         var sum = scores.reduce(function (left, right) {
           return left + right;
         });
         res.json({
           'uid': uid,
-          'emotion_score': sum / scores.length
+          'emotion_score': Math.ceil(sum / scores.length)
         })
       });
     }

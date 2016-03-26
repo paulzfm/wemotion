@@ -5,6 +5,7 @@
 const https = require('https');
 const qs = require('querystring');
 const c = require('./config');
+const md5 = require('md5');
 
 exports.requestToken = function (code, cb) {
   var param = {
@@ -28,7 +29,7 @@ exports.requestToken = function (code, cb) {
     }).on('end', function () {
       var json = JSON.parse(body);
       cb(json);
-    }).on('error', function(e){
+    }).on('error', function (e) {
       console.log('Error: ', e);
     });
   });
@@ -55,7 +56,7 @@ exports.requestPosts = function (token, cb) {
     }).on('end', function () {
       var json = JSON.parse(body);
       cb(json);
-    }).on('error', function(e){
+    }).on('error', function (e) {
       console.log('Error: ', e);
     });
   });
@@ -64,5 +65,7 @@ exports.requestPosts = function (token, cb) {
 
 exports.computeEmotion = function (status) {
   var text = status.text;
-  return Math.random();
+  var hash = parseInt('0x' + md5(text));
+
+  return hash % 100;
 };
